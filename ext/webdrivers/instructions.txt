@@ -1,0 +1,1 @@
+Run `chmod 755 chromedriver` on the filepath if there are execution permmisions
