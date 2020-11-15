@@ -1,4 +1,5 @@
 require 'watir'
+require 'webdrivers/chromedriver'
 
 class MoodleNavigator
 
@@ -13,11 +14,19 @@ class MoodleNavigator
     @today = Time.now.strftime('%d/%m/%Y')
     @windows_opened = 0
     FileUtils.rm_rf(DOWNLOAD_DIR)
-    @log.info 'navegando la plataforma...'
-    Selenium::WebDriver::Chrome::Service.driver_path = './ext/webdrivers/chromedriver'
+    load_chromedriver    
+  end
+
+  def load_chromedriver
+    Webdrivers::Chromedriver.required_version = '86.0'
+    chromedriver_path = './ext/webdrivers/chromedriver'
+    chromedriver_path += '.exe' unless RUBY_PLATFORM.match(/linux/i) # Windows
+    Selenium::WebDriver::Chrome::Service.driver_path = chromedriver_path
   end
 
   def download_from_moodle(type, config)  # config = [{:report_id=>"1073", :aula_ids=>[], :fecha_inicio=>"18-02-2018"}, {:report_id=>"1075", :aula_ids=
+
+    @log.info 'navegando la plataforma...'
 
     if type == 'sited'
       @browser = start_webdriver
