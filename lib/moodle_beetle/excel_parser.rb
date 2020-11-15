@@ -11,8 +11,8 @@ class ExcelParser
     @log = log
   end
 
-  def generate!(process_name, config)
-    @aula_filters = config  # @aula_filters = [{:report_id=>"934", :aula_ids=>["4926"]}, ...
+  def generate!(process_name, reference_records)
+    @aula_filters = reference_records  # @aula_filters = [{:report_id=>"934", :aula_ids=>["4926"]}, ...
     case process_name
     when 'sited'
       run_sited_output
