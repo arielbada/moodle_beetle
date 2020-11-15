@@ -5,7 +5,7 @@ class MoodleNavigator
 
   COORDENADA = 50
   WINDOWS_LIMIT = 3  
-  DOWNLOAD_DIR = File.join(Dir.pwd, 'descargas')
+  DOWNLOAD_DIR = File.join(File.expand_path(Dir.pwd), 'download')
 
   def initialize(username, password, log)
     @username = username
@@ -20,11 +20,11 @@ class MoodleNavigator
   def load_chromedriver
     Webdrivers::Chromedriver.required_version = '86.0'
     chromedriver_path = './ext/webdrivers/chromedriver'
-    chromedriver_path += '.exe' unless RUBY_PLATFORM.match(/linux/i) # Windows
+    chromedriver_path += '.exe' unless os_is_linux?
     Selenium::WebDriver::Chrome::Service.driver_path = chromedriver_path
   end
 
-  def download_from_moodle(type, config)  # config = [{:report_id=>"1073", :aula_ids=>[], :fecha_inicio=>"18-02-2018"}, {:report_id=>"1075", :aula_ids=
+  def download_from_moodle(type, reference_records)  # reference_records = [{:report_id=>"1073", :aula_ids=>[], :fecha_inicio=>"18-02-2018"}, {:report_id=>"1075", :aula_ids=
 
     @log.info 'navegando la plataforma...'
 
@@ -33,38 +33,39 @@ class MoodleNavigator
       @browser.link(text: "Cuantitativo por Categoría").click!
     end
 
-    config.each do |sheet_line|
+    reference_records.each do |record|
       case type
       when 'sited'
-        generar_sited(sheet_line)
+        generar_sited(record)
       when 'inactividad_docente'
-        generar_reporte_docente(sheet_line)
+        generar_reporte_docente(record)
       end
       sleep 7
     end
 
-    sleep 1 while (Dir[File.join(DOWNLOAD_DIR,'*','*.xls*'), File.join(DOWNLOAD_DIR, '*.xls*')].count < config.count)# wait to have all reports downloaded
+    sleep 1 while (Dir[File.join(DOWNLOAD_DIR,'*','*.xls*'), File.join(DOWNLOAD_DIR, '*.xls*')].count < reference_records.count)# wait to have all reports downloaded
 
   end
 
   private
 
-  def generar_sited(sheet_line)
-    @log.info "bajando reporte #{sheet_line[:report_id]}"
-    @browser.text_field('name': 'categoria').set(sheet_line[:report_id])
-    @browser.text_field('name': 'inicio').set(sheet_line[:fecha_inicio].gsub('-', '/'))
-    @browser.text_field('name': 'fin').set(@today)
+  def generar_sited(record)
+    @log.info "bajando reporte #{record[:report_id]}"
+    @browser.text_field('name': 'categoria').set(record[:report_id])
+    @browser.date_field('name': 'inicio').set(record[:fecha_inicio].gsub('-', '/'))
+    @browser.date_field('name': 'fin').set(@today)
     @browser.button(name: 'generar').click!
   end
 
   def start_webdriver(download_folder = '')
-
-    #chrome_options(download_folder) if download_folder && download_folder != ''
-
+    download_prefs = {
+        "directory_upgrade"=> true,
+        "prompt_for_download"=> false,
+        "default_directory"=> new_download_folder(download_folder)
+    }
     options = Selenium::WebDriver::Chrome::Options.new.tap do |o|
-      o.add_preference(:download, directory_upgrade: true,
-                                  prompt_for_download: false,
-                                  default_directory: download_folder.gsub('/', '\\'))
+      o.add_preference(:download, download_prefs)
+      # o.add_preference(:browser, set_download_behavior: { behavior: 'allow' })
       o.add_option(:detach, true)
       o.add_argument('--no-sandbox')
       o.add_argument('--disable-infobars')
@@ -101,13 +102,18 @@ class MoodleNavigator
     return browser
   end
 
-  def chrome_options(download_folder = '')
-    FileUtils.mkdir_p(download_folder)
+  def new_download_folder(folder_name = '')
+    folder_name =  File.join(DOWNLOAD_DIR, folder_name)
+    FileUtils.mkdir_p(folder_name)
 
-    return {
-      prefs: {
-        download: { default_directory: download_folder }
-      }
-    }
+    if os_is_linux?
+      folder_name
+    else
+      folder_name.gsub('/', '\\')
+    end
+  end
+
+  def os_is_linux?
+    RUBY_PLATFORM.match(/linux/i)
   end
 end
