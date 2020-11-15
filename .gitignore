@@ -12,7 +12,9 @@
 *.json
 *.yaml
 log.txt
-
+*.log
+*.csv
+*.xls
 
 ## Documentation cache and generated files:
 /.yardoc/
