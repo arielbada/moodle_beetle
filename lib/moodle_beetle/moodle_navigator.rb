@@ -44,7 +44,7 @@ class MoodleNavigator
     end
 
     sleep 1 while (Dir[File.join(DOWNLOAD_DIR,'*','*.xls*'), File.join(DOWNLOAD_DIR, '*.xls*')].count < reference_records.count)# wait to have all reports downloaded
-
+    @browser.close
   end
 
   private
