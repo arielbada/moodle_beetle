@@ -1,5 +1,5 @@
 require 'watir'
-require 'webdrivers/chromedriver'
+require 'selenium-webdriver'
 
 class MoodleNavigator
 
@@ -13,15 +13,7 @@ class MoodleNavigator
     @log = log
     @today = Time.now.strftime('%d/%m/%Y')
     @windows_opened = 0
-    FileUtils.rm_rf(DOWNLOAD_DIR)
-    load_chromedriver    
-  end
-
-  def load_chromedriver
-    Webdrivers::Chromedriver.required_version = '86.0'
-    chromedriver_path = './ext/webdrivers/chromedriver'
-    chromedriver_path += '.exe' unless os_is_linux?
-    Selenium::WebDriver::Chrome::Service.driver_path = chromedriver_path
+    FileUtils.rm_rf(DOWNLOAD_DIR)    
   end
 
   def download_from_moodle(type, reference_records)  # reference_records = [{:report_id=>"1073", :aula_ids=>[], :fecha_inicio=>"18-02-2018"}, {:report_id=>"1075", :aula_ids=
@@ -57,28 +49,20 @@ class MoodleNavigator
     @browser.button(name: 'generar').click!
   end
 
-  def start_webdriver(download_folder = '')
-    download_prefs = {
-        "directory_upgrade"=> true,
-        "prompt_for_download"=> false,
-        "default_directory"=> new_download_folder(download_folder)
-    }
-    options = Selenium::WebDriver::Chrome::Options.new.tap do |o|
-      o.add_preference(:download, download_prefs)      
-      # o.add_option(:detach, true)
-      o.add_argument('--no-sandbox')
-      o.add_argument('--disable-setuid-sandbox')
-      o.add_argument('--disable-infobars')
-      o.add_argument('--disable-extensions')
-      o.add_argument('--disable-browser-side-navigation')
-      o.add_argument('--disable-dev-shm-usage')
-      o.add_argument('--headless') unless DEBUG && !os_is_linux?
-      o.add_argument('--disable-gpu')
-      o.add_argument('--log-level=3')
-      o.add_argument('--enable-automation')
-    end
+  
 
-    browser = Watir::Browser.new :chrome, options: options
+  def start_webdriver(download_folder = '')    
+    load_geckodriver
+
+    profile = Selenium::WebDriver::Firefox::Profile.new
+    profile['browser.download.dir'] = new_download_folder
+    profile['browser.download.folderList'] = 2
+    profile['browser.download.useDownloadDir'] = true
+    profile['browser.download.folderList'] = 2
+    profile['browser.helperApps.neverAsk.saveToDisk'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/excel;application/vnd.ms-excel;application/x-excel;application/x-msexcel'
+    options = Selenium::WebDriver::Firefox::Options.new(profile: profile, args: ['-headless'])
+
+    browser = Selenium:: WebDriver.for :firefox, options: options
     browser.driver.manage.timeouts.page_load = 90
 
     browser = login(browser)
@@ -118,5 +102,17 @@ class MoodleNavigator
 
   def os_is_linux?
     RUBY_PLATFORM.match(/linux/i)
+  end
+
+  def geckodriver_path
+    path = './ext/webdrivers/geckodriver'
+    path = File.exists?(path) ? path : '.'+path
+    path += '.exe' unless os_is_linux?
+
+    path
+  end
+
+  def load_geckodriver
+    Selenium::WebDriver::Firefox::Service.driver_path = geckodriver_path
   end
 end
