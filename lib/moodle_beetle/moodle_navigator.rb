@@ -64,15 +64,18 @@ class MoodleNavigator
         "default_directory"=> new_download_folder(download_folder)
     }
     options = Selenium::WebDriver::Chrome::Options.new.tap do |o|
-      o.add_preference(:download, download_prefs)
-      # o.add_preference(:browser, set_download_behavior: { behavior: 'allow' })
-      o.add_option(:detach, true)
+      o.add_preference(:download, download_prefs)      
+      # o.add_option(:detach, true)
       o.add_argument('--no-sandbox')
+      o.add_argument('--disable-setuid-sandbox')
       o.add_argument('--disable-infobars')
+      o.add_argument('--disable-extensions')
       o.add_argument('--disable-browser-side-navigation')
-      o.add_argument('--headless') unless DEBUG
+      o.add_argument('--disable-dev-shm-usage')
+      o.add_argument('--headless') unless DEBUG && !os_is_linux?
       o.add_argument('--disable-gpu')
       o.add_argument('--log-level=3')
+      o.add_argument('--enable-automation')
     end
 
     browser = Watir::Browser.new :chrome, options: options
