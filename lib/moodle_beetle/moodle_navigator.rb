@@ -60,9 +60,10 @@ class MoodleNavigator
     profile['browser.download.useDownloadDir'] = true
     profile['browser.download.folderList'] = 2
     profile['browser.helperApps.neverAsk.saveToDisk'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/excel;application/vnd.ms-excel;application/x-excel;application/x-msexcel'
-    options = Selenium::WebDriver::Firefox::Options.new(profile: profile, args: ['-headless'])
+    args = (!DEBUG || os_is_linux?) ? ['-headless'] : []
+    options = Selenium::WebDriver::Firefox::Options.new(profile: profile, args: args)
 
-    browser = Selenium:: WebDriver.for :firefox, options: options
+    browser = Watir::Browser.new :firefox, options: options
     browser.driver.manage.timeouts.page_load = 90
 
     browser = login(browser)
