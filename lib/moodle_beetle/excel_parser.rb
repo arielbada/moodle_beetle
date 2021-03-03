@@ -5,7 +5,7 @@ class ExcelParser
   AULA_EXCEPT = Regexp.union(/00$/)
   DNI_EXCEPT = '01330975'
   CSV_DELIMITER = ';'
-  DOWNLOAD_DIR = File.join(Dir.pwd, 'descargas')
+  DOWNLOAD_DIR = File.join(Dir.pwd, 'downloads')
 
   def initialize(log)
     @log = log
@@ -24,7 +24,7 @@ class ExcelParser
   def parse_sited_excel(excel_path)
     initialize_excel(excel_path)
 
-    sheet_parsed = @sheet.parse(aula_id: /ID Aula/, aula:/^Aula/, dni: /Documento/, apellido: /Apellido/, nombre: /Nombre/, email: /Email/, localidad: /Localidad/, ultimo_acceso: /Último acceso/)    
+    sheet_parsed = @sheet.parse(aula_id: /ID Aula/, aula:/^Aula/, dni: /Documento/, apellido: /Apellido/, nombre: /Nombre/, email: /Email/, localidad: /Localidad/, ultimo_acceso: /ltimo acceso/)    
     sheet_parsed.each{ |record| record[:report_id] = excel_path.match(/(\d+) ?\.xls/)[1] }
 
     sheet_parsed
@@ -32,11 +32,7 @@ class ExcelParser
   
   def initialize_excel(excel_path)
     begin
-      if File.extname(excel_path) == '.xls'
-        @excel = Roo::Spreadsheet.open(excel_path, extension: :xls)
-      else
-        @excel = Roo::Spreadsheet.open(excel_path, extension: :xlsx)
-      end
+      @excel = Roo::Spreadsheet.open(excel_path, extension: :xlsx)      
       @sheet = @excel.sheet(0)
     rescue StandardError => e
       @log.info "error abriendo el archivo excel #{excel_path}" + "\n" + e.to_s
@@ -55,11 +51,10 @@ class ExcelParser
         row[:dni] = row[:dni].to_i
         row[:modulo] = row[:aula].match(/([A-Z][A-Z]M\d+)/)[1]
         row[:ultimo_acceso] = row[:ultimo_acceso].sub(/(\d+\/\d+\/\d+) [\d\:]+$/, '\1')
-        if @type == 'sited'
-          row[:aula_id] = row[:aula_id].to_s.sub(/\.0$/, '')
-          row[:aula_n] = row[:aula].match(/Aula ?(\d+)/)[1].to_i.to_s
-          row.tap { |r| r.delete(:aula) }
-        end
+        row[:aula_id] = row[:aula_id].to_s.sub(/\.0$/, '')
+        row[:aula_n] = row[:aula].match(/Aula ?(\d+)/)[1].to_i.to_s
+        row.tap { |r| r.delete(:aula) }
+
       end
     rescue StandardError => e
       p 'error sanitizing data'
@@ -74,10 +69,8 @@ class ExcelParser
       csv_content = CSV.generate({:col_sep => CSV_DELIMITER}) do |csv|
         @register_colector.each do |row|  # {:aula_id=>"5321", :dni=>27359501, :apellido=>"Moraz Sengel", :nombre=>"Mariana Paola", :email=>"marianamorazsengel@gmail.com", :localidad=>"Tostado", :ultimo_acceso=>"11/03/2018", :report_id=>"1073", :aula_n=>"1", :modulo=>"COM03"}
           #csv << row.values
-          next if row[:aula_n] == "0"
-          if @type == 'sited'
-            csv << [row[:dni], row[:apellido], row[:nombre], row[:email], row[:localidad], row[:ultimo_acceso], row[:aula_n], row[:modulo], row[:report_id]]
-          end
+          next if row[:aula_n] == "0"          
+          csv << [row[:dni], row[:apellido], row[:nombre], row[:email], row[:localidad], row[:ultimo_acceso], row[:aula_n], row[:modulo], row[:report_id]]          
         end
       end
       f.puts BOM + csv_content
@@ -103,7 +96,7 @@ class ExcelParser
   end
 
   def run_sited_output
-    @excel_file_path = Dir[File.join('descargas', '*.xls')]
+    @excel_file_path = Dir[File.join(DOWNLOAD_DIR, '*.xls')]
     @register_colector = []
     @excel_file_path.each do |excel_path|
       @register_colector += parse_sited_excel(excel_path)
