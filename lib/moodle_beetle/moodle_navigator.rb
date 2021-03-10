@@ -18,7 +18,7 @@ class MoodleNavigator
   end
 
   def load_chromedriver
-    Webdrivers::Chromedriver.required_version = '86.0'
+    Webdrivers::Chromedriver.required_version = '69'
     chromedriver_path = './ext/webdrivers/chromedriver'
     chromedriver_path += '.exe' unless os_is_linux?
     Selenium::WebDriver::Chrome::Service.driver_path = chromedriver_path
@@ -58,28 +58,58 @@ class MoodleNavigator
   end
 
   def start_webdriver(download_folder = '')
+    preferences = { 
+		  :download => {
+        'prompt_for_download' => false,
+        'directory_upgrade' => true	
+		  },
+		  'profile' => {
+				'default_content_settings' => {'multiple-automatic-downloads' => 1}, #for chrome version older ~42
+				'default_content_setting_values' => {'automatic_downloads' => 1}
+		  }
+		}
+    
+    options = Selenium::WebDriver::Chrome::Options.new
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+
+    chrome_options = {
+                      :prefs => {
+                                 :download => {
+                                               default_directory: new_download_folder(download_folder)
+                                              }
+                                }
+                     }
+
+           
+    browser = Watir::Browser.new(:chrome, :options => options, :prefs => preferences, :chromeOptions => chrome_options, :lala => "")
+
+    
+=begin
     download_prefs = {
-        "directory_upgrade"=> true,
-        "prompt_for_download"=> false,
-        "default_directory"=> new_download_folder(download_folder)
+      "directory_upgrade"=> true,
+      "prompt_for_download"=> false,
+      "default_directory"=> new_download_folder(download_folder)      
     }
+
     options = Selenium::WebDriver::Chrome::Options.new.tap do |o|
       o.add_preference(:download, download_prefs)      
       # o.add_option(:detach, true)
       o.add_argument('--no-sandbox')
-      o.add_argument('--disable-setuid-sandbox')
-      o.add_argument('--disable-infobars')
-      o.add_argument('--disable-extensions')
-      o.add_argument('--disable-browser-side-navigation')
-      o.add_argument('--disable-dev-shm-usage')
+      #o.add_argument('--disable-setuid-sandbox')
+      #o.add_argument('--disable-infobars')
+      #o.add_argument('--disable-extensions')
+      #o.add_argument('--disable-browser-side-navigation')
+      #o.add_argument('--disable-dev-shm-usage')
       o.add_argument('--headless') unless DEBUG && !os_is_linux?
-      o.add_argument('--disable-gpu')
-      o.add_argument('--log-level=3')
-      o.add_argument('--enable-automation')
+      #o.add_argument('--disable-gpu')
+      #o.add_argument('--log-level=3')
+      #o.add_argument('--enable-automation')
     end
 
     browser = Watir::Browser.new :chrome, options: options
     browser.driver.manage.timeouts.page_load = 90
+=end
 
     browser = login(browser)
 
@@ -106,13 +136,13 @@ class MoodleNavigator
   end
 
   def new_download_folder(folder_name = '')
-    folder_name =  File.join(DOWNLOAD_DIR, folder_name)
+    folder_name =  File.join(DOWNLOAD_DIR, folder_name)    
     FileUtils.mkdir_p(folder_name)
 
     if os_is_linux?
       folder_name
     else
-      folder_name.gsub('/', '\\')
+      folder_name.gsub('/', "\\")
     end
   end
 
