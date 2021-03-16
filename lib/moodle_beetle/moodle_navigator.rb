@@ -57,32 +57,33 @@ class MoodleNavigator
     @browser.button(name: 'generar').click!
   end
 
+  def preferences
+    return { 
+      :download => {
+      :prompt_for_download => false,
+      :directory_upgrade => true
+      },
+      'profile' => {
+        'default_content_settings' => {'multiple-automatic-downloads' => 1}, #for chrome version older ~42
+        'default_content_setting_values' => {'automatic_downloads' => 1}, #for chrome newe 46
+      }
+    }
+  end
+
+  def chrome_options(download_folder)    
+    return {
+      prefs: {
+        download: { default_directory: new_download_folder(download_folder)}
+      }
+    }
+  end
+
+
   def start_webdriver(download_folder = '')
-    preferences = { 
-		  :download => {
-        'prompt_for_download' => false,
-        'directory_upgrade' => true	
-		  },
-		  'profile' => {
-				'default_content_settings' => {'multiple-automatic-downloads' => 1}, #for chrome version older ~42
-				'default_content_setting_values' => {'automatic_downloads' => 1}
-		  }
-		}
-    
-    options = Selenium::WebDriver::Chrome::Options.new
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-
-    chrome_options = {
-                      :prefs => {
-                                 :download => {
-                                               default_directory: new_download_folder(download_folder)
-                                              }
-                                }
-                     }
-
-           
-    browser = Watir::Browser.new(:chrome, :options => options, :prefs => preferences, :chromeOptions => chrome_options, :lala => "")
+    # Selenium:: WebDriver.logger.level = :info
+    browser = Watir::Browser.new(:chrome,
+                                 :prefs => preferences,
+                                 :chromeOptions => chrome_options(download_folder))
 
     
 =begin
