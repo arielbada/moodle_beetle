@@ -12,7 +12,7 @@ class ExcelParser
   end
 
   def generate!(process_name, reference_records)
-    @aula_filters = reference_records  # @aula_filters = [{:report_id=>"934", :aula_ids=>["4926"]}, ...
+    @aula_filters = reference_records
     case process_name
     when 'sited'
       run_sited_output
@@ -77,24 +77,6 @@ class ExcelParser
     end
   end
 
-  def write_xlsx
-    workbook = WriteXLSX.new('total.xlsx')    
-    workbook.close
-  end
-
-  def filter_records
-    @new_colection = []
-
-    @aula_filters.each do |filter|
-      if filter[:aula_ids].count > 0
-        @log.info "filtrando reporte: #{filter[:report_id].to_s}  -  aulas: #{filter[:aula_ids].join(", ")}"
-        @register_colector.delete_if { |x| x[:report_id] == filter[:report_id] and !filter[:aula_ids].include?(x[:aula_n]) }
-      end
-    end
-
-    @register_colector
-  end
-
   def run_sited_output
     @excel_file_path = Dir[File.join(DOWNLOAD_DIR, '*.xls')]
     @register_colector = []
@@ -104,9 +86,7 @@ class ExcelParser
     @log.info "#{@register_colector.count} registros totales"
     sanitize_data
     @log.info "#{@register_colector.count} registros después de limpieza"
-    filter_records
-    @log.info "#{@register_colector.count} registros después de filtrados"
 
     write_csv
-  end 
+  end
 end
