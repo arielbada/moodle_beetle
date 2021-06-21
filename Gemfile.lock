@@ -36,6 +36,8 @@ GEM
     net_http_ssl_fix (0.0.10)
     nokogiri (1.10.10)
       mini_portile2 (~> 2.4.0)
+    nokogiri (1.10.10-x86-mingw32)
+      mini_portile2 (~> 2.4.0)
     os (1.1.1)
     public_suffix (4.0.6)
     regexp_parser (1.8.2)
@@ -81,6 +83,7 @@ GEM
 
 PLATFORMS
   ruby
+  x86-mingw32
 
 DEPENDENCIES
   csv
@@ -94,7 +97,7 @@ DEPENDENCIES
   zip-zip (= 0.3)
 
 RUBY VERSION
-   ruby 2.7.1p83
+   ruby 2.7.3p183
 
 BUNDLED WITH
    2.1.4
